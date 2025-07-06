@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
-import { SlashCommandParser, SlashCommand } from '../../../slash-commands/SlashCommand.js';
 export { MODULE_NAME };
 
+// Define module name
 const MODULE_NAME = 'vrCombatSimulator';
 
 // ============== COMBAT ENGINE START ==============
@@ -60,7 +60,13 @@ const VRCombatSimulator = (() => {
     const attemptFlee = luk => rollD6() >= (6 - luk);
 
     // 3. COMBAT ENGINE
-    const runCombat = (player, enemies, targetStrategy = 'random') => {
+    /**
+     * Run VR combat simulation
+     * @param {Object} player Player stats
+     * @param {Array} enemies Array of enemy groups
+     * @returns {Promise<string>} Combat result log
+     */
+    const runCombat = (player, enemies) => {
         // Initialize combat state
         const combatLog = [];
         let playerHp = player.hp;
@@ -151,17 +157,7 @@ const VRCombatSimulator = (() => {
             combatLog.push(`🏃 RETREAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
         }
 
-        return {
-            log: combatLog.join('\n'),
-            player: {
-                ...player,
-                hp: playerHp,
-                xp: player.xp + xpChange,
-                gold: player.gold + goldChange
-            },
-            victory,
-            fled
-        };
+        return Promise.resolve(combatLog.join('\n'));
     };
 
     return { runCombat };
@@ -176,59 +172,52 @@ function registerCombatTool() {
             return;
         }
 
-        context.registerFunctionTool({
-            name: "vrCombatSimulator",
-            displayName: "VR Combat Simulator",
-            description: "Run VR combat simulation using Lukkeh's formulas",
-            parameters: {
-                $schema: "http://json-schema.org/draft-04/schema#",
-                type: "object",
-                properties: {
-                    player: {
-                        type: "object",
-                        properties: {
-                            level: { type: "integer" },
-                            hp: { type: "integer" },
-                            maxHp: { type: "integer" },
-                            atk: { type: "integer" },
-                            def: { type: "integer" },
-                            luk: { type: "integer" },
-                            gold: { type: "integer" },
-                            potions: { type: "integer" },
-                            xp: { type: "integer" }
-                        },
-                        required: ["level", "hp", "maxHp", "atk", "def", "luk"]
+        const combatSchema = Object.freeze({
+            $schema: 'http://json-schema.org/draft-04/schema#',
+            type: 'object',
+            properties: {
+                player: {
+                    type: 'object',
+                    properties: {
+                        level: { type: 'integer' },
+                        hp: { type: 'integer' },
+                        maxHp: { type: 'integer' },
+                        atk: { type: 'integer' },
+                        def: { type: 'integer' },
+                        luk: { type: 'integer' },
+                        gold: { type: 'integer' },
+                        potions: { type: 'integer' },
+                        xp: { type: 'integer' }
                     },
-                    enemies: {
-                        type: "array",
-                        items: {
-                            type: "object",
-                            properties: {
-                                count: { type: "integer", minimum: 1, maximum: 5 },
-                                level: { type: "integer", minimum: 1, maximum: 50 },
-                                type: {
-                                    type: "string",
-                                    enum: ["Trash", "Normal", "Elite", "Boss"]
-                                }
-                            },
-                            required: ["count", "level", "type"]
-                        }
-                    }
+                    required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk']
                 },
-                required: ["player", "enemies"]
+                enemies: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            count: { type: 'integer', minimum: 1, maximum: 5 },
+                            level: { type: 'integer', minimum: 1, maximum: 50 },
+                            type: {
+                                type: 'string',
+                                enum: ['Trash', 'Normal', 'Elite', 'Boss']
+                            }
+                        },
+                        required: ['count', 'level', 'type']
+                    }
+                }
             },
-            /**
-             * Run combat simulation
-             * @param {Object} args Function arguments
-             * @param {Object} args.player Player stats
-             * @param {Array} args.enemies Enemy groups
-             * @returns {Promise<string>} Combat log
-             */
-            action: async ({ player, enemies }) => {
-                const result = VRCombatSimulator.runCombat(player, enemies);
-                const context = getContext();
-                const charName = context.name1 || "The hero";
-                return `${charName} engages in combat:\n${result.log}`;
+            required: ['player', 'enemies']
+        });
+
+        context.registerFunctionTool({
+            name: 'vrCombatSimulator',
+            displayName: 'VR Combat Simulator',
+            description: 'Run VR combat simulation using Lukkeh\'s formulas. Use when combat needs to be resolved.',
+            parameters: combatSchema,
+            action: async (args) => {
+                const result = await VRCombatSimulator.runCombat(args.player, args.enemies);
+                return result;
             },
             formatMessage: () => '',
         });
@@ -238,25 +227,6 @@ function registerCombatTool() {
     }
 }
 
-// Add slash command for manual combat triggering
-function addCombatSlashCommand() {
-    SlashCommandParser.addCommandObject(
-        SlashCommand.fromProps({
-            name: 'combat',
-            description: 'Initiate VR combat simulation',
-            callback: async (_, value) => {
-                try {
-                    // This would need actual parameter parsing in real implementation
-                    return "Use the vrCombatSimulator function for combat";
-                } catch (error) {
-                    return `Combat error: ${error.message}`;
-                }
-            }
-        })
-    );
-}
-
 jQuery(function () {
     registerCombatTool();
-    addCombatSlashCommand();
 });
