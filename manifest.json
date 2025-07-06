@@ -1,14 +1,15 @@
 {
     "display_name": "VR Combat Simulator",
-    "description": "Automated combat system for VR-style roleplay",
-    "author": "Zuuda",
+    "description": "Automated combat system for VR-style roleplay with stat-based calculations",
     "version": "1.0.0",
-    "homepage": "https://github.com/Zuuda/vr-combat-simulator",
+    "author": "Zuuda",
     "license": "MIT",
-    "loading_order": 10,
-    "requires": [],
-    "optional": [],
+    "homepage": "https://github.com/Zuuda/vr-combat-simulator",
     "js": "plugin.js",
     "css": "",
-    "auto_update": true
+    "requirements": {
+        "toolCalling": true
+    },
+    "optional": ["jquery"],
+    "loading_order": 10
 }
