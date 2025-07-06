@@ -48,15 +48,6 @@ const VRCombatSimulator = (() => {
         return { damage: totalDamage, isMiss: false, isCrit: false };
     };
 
-    const getWoundSeverity = (damage, maxHealth) => {
-        const pct = (damage / maxHealth) * 100;
-        if (pct <= 10) return "Glancing Blow";
-        if (pct <= 25) return "Moderate Wound";
-        if (pct <= 50) return "Severe Injury";
-        if (pct <= 75) return "Critical Trauma";
-        return "Lethal Blow";
-    };
-
     const attemptFlee = luk => rollD6() >= (6 - luk);
 
     // 3. COMBAT ENGINE
@@ -113,8 +104,7 @@ const VRCombatSimulator = (() => {
                     combatLog.push(`❌ Attack missed Group ${target.groupId}!`);
                 } else {
                     target.currentHp = Math.max(0, target.currentHp - damage);
-                    const severity = getWoundSeverity(damage, target.maxHp);
-                    combatLog.push(`🗡️ Hit Group ${target.groupId}: ${damage} dmg (${severity})`);
+                    combatLog.push(`🗡️ Hit Group ${target.groupId}: ${damage} dmg`);
                     if (isCrit) combatLog.push(`✨ CRITICAL!`);
                     if (target.currentHp <= 0) combatLog.push(`☠️ Group ${target.groupId} defeated`);
                 }
@@ -148,13 +138,9 @@ const VRCombatSimulator = (() => {
             });
             combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver`);
         } else if (playerHp <= 0) {
-            xpChange = -Math.floor(player.xp * 0.1);
-            goldChange = -Math.floor(player.gold * 0.1);
-            combatLog.push(`💀 DEFEAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
+            combatLog.push(`💀 DEFEAT! No penalties`);
         } else if (fled) {
-            xpChange = -Math.floor(player.xp * 0.05);
-            goldChange = -Math.floor(player.gold * 0.05);
-            combatLog.push(`🏃 RETREAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
+            combatLog.push(`🏃 RETREAT! No penalties`);
         }
 
         return Promise.resolve(combatLog.join('\n'));
@@ -213,7 +199,7 @@ function registerCombatTool() {
         context.registerFunctionTool({
             name: 'vrCombatSimulator',
             displayName: 'VR Combat Simulator',
-            description: 'Run VR combat simulation using {{user}}\'s formulas. Do not simulate combat, just invoke this tool.',
+            description: 'Run VR combat simulation using Lukkeh\'s formulas. Do not simulate combat, just invoke this tool.',
             parameters: combatSchema,
             action: async (args) => {
                 const result = await VRCombatSimulator.runCombat(args.player, args.enemies);
