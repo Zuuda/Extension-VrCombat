@@ -137,16 +137,16 @@ const VRCombatSimulator = (() => {
                 goldChange += Math.floor((5 + Math.random() * 10) * group.mobs[0].level * group.mobs.length);
             });
             // MODIFIED: Added HP and potion info to victory message
-            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions} Summarize the results into a roleplay fight (not a mechanical retelling) coinciding with said results and adjust the HUD. At the same time resume your duties focused on an expanded roleplay narrative where you narrate as an irreverent omniscient observer retelling what they see and who understands character motivations and backstories. Mock their dumb decisions, dissect their hypocrisy, but let their stupid little feet walk the plot forward themselves.`);
+            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
         } else if (playerHp <= 0) {
             // START MODIFICATION: Remove XP/gold penalty on defeat
             // MODIFIED: Added HP and potion info to defeat message
-            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions} Summarize the results into a roleplay fight (not a mechanical retelling) coinciding with said results and adjust the HUD. At the same time resume your duties focused on an expanded roleplay narrative where you narrate as an irreverent omniscient observer retelling what they see and who understands character motivations and backstories. Mock their dumb decisions, dissect their hypocrisy, but let their stupid little feet walk the plot forward themselves`);
+            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
             // END MODIFICATION
         } else if (fled) {
             // START MODIFICATION: Remove XP/gold penalty on retreat
             // MODIFIED: Added HP and potion info to retreat message
-            combatLog.push(`🏃 RETREAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions} Summarize the results into a roleplay fight (not a mechanical retelling) coinciding with said results and adjust the HUD. At the same time resume your duties focused on an expanded roleplay narrative where you narrate as an irreverent omniscient observer retelling what they see and who understands character motivations and backstories. Mock their dumb decisions, dissect their hypocrisy, but let their stupid little feet walk the plot forward themselves`);
+            combatLog.push(`🏃 RETREAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
             // END MODIFICATION
         }
 
