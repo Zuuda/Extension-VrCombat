@@ -220,13 +220,18 @@ function registerCombatTool() {
                 return VRCombatSimulator.runCombat(player, enemies);
             },
             formatMessage: () => '',
-            stealth: true
         });
+        console.log('VR Combat Simulator registered successfully');
     } catch (error) {
         console.error('VR Combat Simulator: Error registering function tools', error);
     }
 }
 
-jQuery(function() {
-    registerCombatTool();
-});
+// Wait for SillyTavern to fully initialize
+setTimeout(() => {
+    if (window.getContext) {
+        registerCombatTool();
+    } else {
+        console.error('VR Combat Simulator: SillyTavern context not available');
+    }
+}, 1000);
