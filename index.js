@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // Define module name
-export const MODULE_NAME = 'vrCombatSimulator';
+const MODULE_NAME = 'vrCombatSimulator';
 
 // ============== COMBAT ENGINE START ==============
 const VRCombatSimulator = (() => {
