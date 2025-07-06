@@ -175,44 +175,63 @@ function registerCombatTool() {
     try {
         const context = getContext();
         if (!context || !context.registerFunctionTool) {
-            console.debug('VR Combat Simulator: Function tools not supported');
+            console.debug('VR Combat Simulator: Function tools are not supported');
             return;
         }
 
-        // Register the tool explicitly
         context.registerFunctionTool({
             name: "vrCombatSimulator",
-            // ... [rest of your tool definition stays the same] ...
+            displayName: "VR Combat Simulator",
+            description: "Run VR combat simulation using Lukkeh's formulas",
+            parameters: {
+                $schema: "http://json-schema.org/draft-04/schema#",
+                type: "object",
+                properties: {
+                    player: {
+                        type: "object",
+                        properties: {
+                            level: { type: "integer" },
+                            hp: { type: "integer" },
+                            maxHp: { type: "integer" },
+                            atk: { type: "integer" },
+                            def: { type: "integer" },
+                            luk: { type: "integer" },
+                            gold: { type: "integer" },
+                            potions: { type: "integer" },
+                            xp: { type: "integer" }
+                        },
+                        required: ["level", "hp", "maxHp", "atk", "def", "luk"]
+                    },
+                    enemies: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                count: { type: "integer", minimum: 1, maximum: 5 },
+                                level: { type: "integer", minimum: 1, maximum: 50 },
+                                type: {
+                                    type: "string",
+                                    enum: ["Trash", "Normal", "Elite", "Boss"]
+                                }
+                            },
+                            required: ["count", "level", "type"]
+                        }
+                    }
+                },
+                required: ["player", "enemies"]
+            },
+            action: async ({ player, enemies }) => {
+                return VRCombatSimulator.runCombat(player, enemies);
+            },
+            formatMessage: () => '',
+            stealth: true
         });
-
-        console.log('VR Combat Simulator registered successfully');
-
-        // Add to global context so ST recognizes it
-        window.vrCombatSimulator = VRCombatSimulator;
+        console.log('VR Combat Simulator tool registered successfully');
     } catch (error) {
-        console.error('VR Combat Simulator registration error:', error);
+        console.error('VR Combat Simulator: Error registering function tools', error);
     }
 }
 
-// Register on extension load
-jQuery(async () => {
-    if (window.getContext) {
-        await registerCombatTool();
-
-        // Add to SillyTavern's recognized tools
-        const context = getContext();
-        if (context && context.tools) {
-            context.tools.push({
-                name: 'vrCombatSimulator',
-                displayName: 'VR Combat Simulator',
-                description: 'Run VR combat simulations',
-                icon: '⚔️',
-                parameters: {
-                    // ... [repeat your parameters schema here] ...
-                }
-            });
-        }
-    } else {
-        console.error('VR Combat Simulator: SillyTavern context unavailable');
-    }
+jQuery(function () {
+    registerCombatTool();
 });
