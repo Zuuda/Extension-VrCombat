@@ -6,10 +6,6 @@
     "license": "MIT",
     "homepage": "https://github.com/Zuuda/vr-combat-simulator",
     "js": "plugin.js",
-    "css": "",
-    "requirements": {
-        "toolCalling": true
-    },
-    "optional": ["jquery"],
-    "loading_order": 10
+    "loading_order": 5,
+    "auto_update": true
 }
