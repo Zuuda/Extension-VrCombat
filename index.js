@@ -216,7 +216,7 @@ jQuery(function() {
             action: async ({ player, enemies }) => {
                 return VRCombatSimulator.runCombat(player, enemies);
             },
-            stealth: true
+            stealth: false
         });
     }
 });
