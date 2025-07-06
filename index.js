@@ -143,7 +143,7 @@ const VRCombatSimulator = (() => {
             // END MODIFICATION
         } else if (fled) {
             // START MODIFICATION: Remove XP/gold penalty on retreat
-            combatLog.push(`🏃 RETREAT! No XP or silver lost.`);
+            combatLog.push(`🏃 RETREAT!`);
             // END MODIFICATION
         }
 
@@ -177,7 +177,7 @@ function registerCombatTool() {
                         luk: { type: 'integer' },
                         potions: { type: 'integer' },
                         },
-                    required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk']
+                    required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk', 'potions']
                 },
                 enemies: {
                     type: 'array',
