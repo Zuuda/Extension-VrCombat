@@ -1,7 +1,9 @@
-// VR Combat Simulator Extension for SillyTavern
-// Complete code without truncation
+import { getContext } from '../../../extensions.js';
 
-// Combat Engine
+// Define module name
+export const MODULE_NAME = 'vrCombatSimulator';
+
+// ============== COMBAT ENGINE START ==============
 const VRCombatSimulator = (() => {
     // 1. MOB STAT GENERATION
     const createMob = (level, type) => {
@@ -164,36 +166,15 @@ const VRCombatSimulator = (() => {
     return { runCombat };
 })();
 
-// Tool Registration
+// ============== TOOL REGISTRATION ==============
 function registerCombatTool() {
     try {
-        console.log('Attempting to register VR Combat Simulator tool...');
-
-        // Check if SillyTavern is available
-        if (typeof SillyTavern === 'undefined') {
-            console.error('SillyTavern object not found');
+        const context = getContext();
+        if (!context || !context.registerFunctionTool) {
+            console.debug('VR Combat Simulator: Function tools are not supported');
             return;
         }
 
-        const context = SillyTavern.getContext();
-        if (!context) {
-            console.error('Failed to get context');
-            return;
-        }
-
-        // Check if tool calling is supported
-        if (!context.isToolCallingSupported || !context.isToolCallingSupported()) {
-            console.error('Tool calling is not supported');
-            return;
-        }
-
-        // Check if the registration function exists
-        if (!context.registerFunctionTool) {
-            console.error('registerFunctionTool is not available');
-            return;
-        }
-
-        // Register the tool
         context.registerFunctionTool({
             name: "vrCombatSimulator",
             displayName: "VR Combat Simulator",
@@ -241,15 +222,11 @@ function registerCombatTool() {
             formatMessage: () => '',
             stealth: true
         });
-
-        console.log('VR Combat Simulator tool registered successfully');
     } catch (error) {
-        console.error('Error during tool registration:', error);
+        console.error('VR Combat Simulator: Error registering function tools', error);
     }
 }
 
-// Wait for the document to be ready and then register the tool
-jQuery(function($) {
-    // We'll also wait a bit to ensure SillyTavern is fully loaded
-    setTimeout(registerCombatTool, 1000);
+jQuery(function() {
+    registerCombatTool();
 });
