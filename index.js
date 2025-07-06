@@ -166,17 +166,14 @@ const VRCombatSimulator = (() => {
 
     return { runCombat };
 })();
-
-import { getContext } from '../../../extensions.js';
-
-export const MODULE_NAME = 'vrCombatSimulator';
+// ============== END OF COMBAT ENGINE ==============
 
 // ============== TOOL REGISTRATION ==============
-function registerCombatTool() {
+function registerFunctionTools() {
     try {
         const context = getContext();
         if (!context || !context.registerFunctionTool) {
-            console.debug('VR Combat Simulator: Function tools are not supported');
+            console.debug(`${MODULE_NAME}: Function tools are not supported`);
             return;
         }
 
@@ -227,12 +224,14 @@ function registerCombatTool() {
             formatMessage: () => '',
             stealth: true
         });
-        console.log('VR Combat Simulator tool registered successfully');
+        console.log(`${MODULE_NAME} tool registered successfully`);
     } catch (error) {
-        console.error('VR Combat Simulator: Error registering function tools', error);
+        console.error(`${MODULE_NAME}: Error registering function tools`, error);
     }
 }
 
 jQuery(function () {
+    registerFunctionTools();
+});
     registerCombatTool();
 });
