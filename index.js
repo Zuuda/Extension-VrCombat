@@ -136,14 +136,17 @@ const VRCombatSimulator = (() => {
                 xpChange += Math.floor(baseXP * multiplier * group.mobs.length);
                 goldChange += Math.floor((5 + Math.random() * 10) * group.mobs[0].level * group.mobs.length);
             });
-            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver`);
+            // MODIFIED: Added HP and potion info to victory message
+            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
         } else if (playerHp <= 0) {
             // START MODIFICATION: Remove XP/gold penalty on defeat
-            combatLog.push(`💀 DEFEAT!`);
+            // MODIFIED: Added HP and potion info to defeat message
+            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
             // END MODIFICATION
         } else if (fled) {
             // START MODIFICATION: Remove XP/gold penalty on retreat
-            combatLog.push(`🏃 RETREAT!`);
+            // MODIFIED: Added HP and potion info to retreat message
+            combatLog.push(`🏃 RETREAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
             // END MODIFICATION
         }
 
