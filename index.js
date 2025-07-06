@@ -60,6 +60,12 @@ const VRCombatSimulator = (() => {
     const attemptFlee = luk => rollD6() >= (6 - luk);
 
     // 3. COMBAT ENGINE
+    /**
+     * Run VR combat simulation
+     * @param {object} player Player stats
+     * @param {array} enemies Enemy groups
+     * @returns {Promise<string>} Combat log
+     */
     const runCombat = (player, enemies, targetStrategy = 'random') => {
         // Initialize combat state
         const combatLog = [];
@@ -151,30 +157,24 @@ const VRCombatSimulator = (() => {
             combatLog.push(`🏃 RETREAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
         }
 
-        return {
-            log: combatLog.join('\n'),
-            player: {
-                ...player,
-                hp: playerHp,
-                xp: player.xp + xpChange,
-                gold: player.gold + goldChange
-            },
-            victory,
-            fled
-        };
+        return combatLog.join('\n');
     };
 
     return { runCombat };
 })();
-// ============== END OF COMBAT ENGINE ==============
 
 // ============== TOOL REGISTRATION ==============
-jQuery(function() {
-    const context = getContext();
+function registerCombatTool() {
+    try {
+        const context = getContext();
+        if (!context || !context.registerFunctionTool) {
+            console.debug('VR Combat Simulator: Function tools are not supported');
+            return;
+        }
 
-    if (context.isToolCallingSupported()) {
         context.registerFunctionTool({
             name: "vrCombatSimulator",
+            displayName: "VR Combat Simulator",
             description: "Run VR combat simulation using Lukkeh's formulas",
             parameters: {
                 $schema: "http://json-schema.org/draft-04/schema#",
@@ -213,10 +213,23 @@ jQuery(function() {
                 },
                 required: ["player", "enemies"]
             },
+            /**
+             * Execute combat simulation
+             * @param {object} args Function arguments
+             * @returns {Promise<string>} Combat log
+             */
             action: async ({ player, enemies }) => {
                 return VRCombatSimulator.runCombat(player, enemies);
             },
+            formatMessage: () => '',
             stealth: false
         });
+        console.log('VR Combat Simulator tool registered successfully');
+    } catch (error) {
+        console.error('VR Combat Simulator: Error registering function tools', error);
     }
+}
+
+jQuery(function () {
+    registerCombatTool();
 });
