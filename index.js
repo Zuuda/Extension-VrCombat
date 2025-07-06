@@ -1,4 +1,5 @@
 import { getContext } from '../../../extensions.js';
+export { MODULE_NAME };
 
 // Define module name
 const MODULE_NAME = 'vrCombatSimulator';
