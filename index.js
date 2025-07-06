@@ -175,10 +175,8 @@ function registerCombatTool() {
                         atk: { type: 'integer' },
                         def: { type: 'integer' },
                         luk: { type: 'integer' },
-                        gold: { type: 'integer' },
                         potions: { type: 'integer' },
-                        xp: { type: 'integer' }
-                    },
+                        },
                     required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk']
                 },
                 enemies: {
