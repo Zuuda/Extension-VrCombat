@@ -169,17 +169,12 @@ const VRCombatSimulator = (() => {
 // ============== END OF COMBAT ENGINE ==============
 
 // ============== TOOL REGISTRATION ==============
-function registerFunctionTools() {
-    try {
-        const context = getContext();
-        if (!context || !context.registerFunctionTool) {
-            console.debug(`${MODULE_NAME}: Function tools are not supported`);
-            return;
-        }
+jQuery(function() {
+    const context = getContext();
 
+    if (context.isToolCallingSupported()) {
         context.registerFunctionTool({
             name: "vrCombatSimulator",
-            displayName: "VR Combat Simulator",
             description: "Run VR combat simulation using Lukkeh's formulas",
             parameters: {
                 $schema: "http://json-schema.org/draft-04/schema#",
@@ -221,17 +216,7 @@ function registerFunctionTools() {
             action: async ({ player, enemies }) => {
                 return VRCombatSimulator.runCombat(player, enemies);
             },
-            formatMessage: () => '',
             stealth: true
         });
-        console.log(`${MODULE_NAME} tool registered successfully`);
-    } catch (error) {
-        console.error(`${MODULE_NAME}: Error registering function tools`, error);
     }
-}
-
-jQuery(function () {
-    registerFunctionTools();
-});
-    registerCombatTool();
 });
