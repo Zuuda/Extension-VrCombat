@@ -211,7 +211,7 @@ function registerCombatTool() {
                 return result;
             },
             formatMessage: () => '',
-            stealth: true
+            stealth: false
         });
         console.log('VR Combat Simulator tool registered successfully');
     } catch (error) {
