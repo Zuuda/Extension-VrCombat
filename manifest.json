@@ -1,7 +1,7 @@
 {
     "display_name": "VR Combat Simulator",
     "description": "Automated combat system for VR-style roleplay",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "Zuuda",
     "license": "MIT",
     "homepage": "https://github.com/Zuuda/vr-combat-simulator",
