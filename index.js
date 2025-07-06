@@ -139,7 +139,7 @@ const VRCombatSimulator = (() => {
             combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver`);
         } else if (playerHp <= 0) {
             // START MODIFICATION: Remove XP/gold penalty on defeat
-            combatLog.push(`💀 DEFEAT! No XP or silver lost.`);
+            combatLog.push(`💀 DEFEAT!`);
             // END MODIFICATION
         } else if (fled) {
             // START MODIFICATION: Remove XP/gold penalty on retreat
