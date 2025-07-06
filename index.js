@@ -138,13 +138,13 @@ const VRCombatSimulator = (() => {
             });
             combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver`);
         } else if (playerHp <= 0) {
-            xpChange = -Math.floor(player.xp * 0.1);
-            goldChange = -Math.floor(player.gold * 0.1);
-            combatLog.push(`💀 DEFEAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
+            // START MODIFICATION: Remove XP/gold penalty on defeat
+            combatLog.push(`💀 DEFEAT! No XP or silver lost.`);
+            // END MODIFICATION
         } else if (fled) {
-            xpChange = -Math.floor(player.xp * 0.05);
-            goldChange = -Math.floor(player.gold * 0.05);
-            combatLog.push(`🏃 RETREAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
+            // START MODIFICATION: Remove XP/gold penalty on retreat
+            combatLog.push(`🏃 RETREAT! No XP or silver lost.`);
+            // END MODIFICATION
         }
 
         return Promise.resolve(combatLog.join('\n'));
