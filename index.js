@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
+import { SlashCommandParser, SlashCommand } from '../../../slash-commands/SlashCommand.js';
 export { MODULE_NAME };
 
-// Define module name
 const MODULE_NAME = 'vrCombatSimulator';
 
 // ============== COMBAT ENGINE START ==============
@@ -60,12 +60,6 @@ const VRCombatSimulator = (() => {
     const attemptFlee = luk => rollD6() >= (6 - luk);
 
     // 3. COMBAT ENGINE
-    /**
-     * Run VR combat simulation
-     * @param {object} player Player stats
-     * @param {array} enemies Enemy groups
-     * @returns {Promise<string>} Combat log
-     */
     const runCombat = (player, enemies, targetStrategy = 'random') => {
         // Initialize combat state
         const combatLog = [];
@@ -157,7 +151,17 @@ const VRCombatSimulator = (() => {
             combatLog.push(`🏃 RETREAT! Lost ${-xpChange} XP and ${-goldChange} silver`);
         }
 
-        return combatLog.join('\n');
+        return {
+            log: combatLog.join('\n'),
+            player: {
+                ...player,
+                hp: playerHp,
+                xp: player.xp + xpChange,
+                gold: player.gold + goldChange
+            },
+            victory,
+            fled
+        };
     };
 
     return { runCombat };
@@ -214,15 +218,19 @@ function registerCombatTool() {
                 required: ["player", "enemies"]
             },
             /**
-             * Execute combat simulation
-             * @param {object} args Function arguments
+             * Run combat simulation
+             * @param {Object} args Function arguments
+             * @param {Object} args.player Player stats
+             * @param {Array} args.enemies Enemy groups
              * @returns {Promise<string>} Combat log
              */
             action: async ({ player, enemies }) => {
-                return VRCombatSimulator.runCombat(player, enemies);
+                const result = VRCombatSimulator.runCombat(player, enemies);
+                const context = getContext();
+                const charName = context.name1 || "The hero";
+                return `${charName} engages in combat:\n${result.log}`;
             },
             formatMessage: () => '',
-            stealth: false
         });
         console.log('VR Combat Simulator tool registered successfully');
     } catch (error) {
@@ -230,6 +238,25 @@ function registerCombatTool() {
     }
 }
 
+// Add slash command for manual combat triggering
+function addCombatSlashCommand() {
+    SlashCommandParser.addCommandObject(
+        SlashCommand.fromProps({
+            name: 'combat',
+            description: 'Initiate VR combat simulation',
+            callback: async (_, value) => {
+                try {
+                    // This would need actual parameter parsing in real implementation
+                    return "Use the vrCombatSimulator function for combat";
+                } catch (error) {
+                    return `Combat error: ${error.message}`;
+                }
+            }
+        })
+    );
+}
+
 jQuery(function () {
     registerCombatTool();
+    addCombatSlashCommand();
 });
