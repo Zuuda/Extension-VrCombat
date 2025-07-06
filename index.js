@@ -141,7 +141,7 @@ const VRCombatSimulator = (() => {
         } else if (playerHp <= 0) {
             // START MODIFICATION: Remove XP/gold penalty on defeat
             // MODIFIED: Added HP and potion info to defeat message
-            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
+            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions} Reply based on <Meta-Information>`);
             // END MODIFICATION
         } else if (fled) {
             // START MODIFICATION: Remove XP/gold penalty on retreat
