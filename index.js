@@ -164,14 +164,18 @@ const VRCombatSimulator = (() => {
 // ============== TOOL REGISTRATION ==============
 function registerCombatTool() {
     try {
-        const context = getContext();
+        // Use global SillyTavern context
+        const context = typeof SillyTavern !== 'undefined'
+            ? SillyTavern.getContext()
+            : null;
+
         if (!context || !context.registerFunctionTool) {
-            console.debug('VR Combat Simulator: Function tools are not supported');
+            console.error('VR Combat: SillyTavern context unavailable');
             return;
         }
 
         if (!context.isToolCallingSupported()) {
-            console.log('VR Combat Simulator: Function tool calling is not supported');
+            console.log('VR Combat: Function calling not supported');
             return;
         }
 
@@ -222,12 +226,13 @@ function registerCombatTool() {
             formatMessage: () => '',
             stealth: true
         });
+        console.log('VR Combat Simulator registered successfully');
     } catch (error) {
-        console.error('VR Combat Simulator: Error registering function tools', error);
+        console.error('VR Combat registration failed:', error);
     }
 }
 
-jQuery(function() {
-    registerCombatTool();
+// Wait for DOM and SillyTavern to initialize
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(registerCombatTool, 1000);
 });
-// ============== END OF COMBAT ENGINE ==============
