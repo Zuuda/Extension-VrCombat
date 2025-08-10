@@ -2,7 +2,7 @@ import { getContext } from '../../../extensions.js';
 export { MODULE_NAME };
 
 // Define module name
-const MODULE_NAME = 'vrCombatSimulator';
+const MODULE_NAME = 'VrCombat';
 
 // ============== COMBAT ENGINE START ==============
 const VRCombatSimulator = (() => {
@@ -222,4 +222,5 @@ function registerCombatTool() {
 jQuery(function () {
     registerCombatTool();
 });
+
 
