@@ -203,8 +203,8 @@ function registerCombatTool() {
 
         context.registerFunctionTool({
             name: 'vrCombatSimulator',
-            displayName: 'VR Combat Simulator',
-            description: 'Run VR combat simulation using Lukkeh\'s formulas. Do not simulate combat, just invoke this tool.',
+            displayName: 'VrCombat',
+            description: 'VrCombat is a tool to simulate combat.',
             parameters: combatSchema,
             action: async (args) => {
                 const result = await VRCombatSimulator.runCombat(args.player, args.enemies);
@@ -222,3 +222,4 @@ function registerCombatTool() {
 jQuery(function () {
     registerCombatTool();
 });
+
