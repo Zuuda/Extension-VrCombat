@@ -5,7 +5,7 @@ export { MODULE_NAME };
 const MODULE_NAME = 'VrCombat';
 
 // ============== COMBAT ENGINE START ==============
-const VRCombatSimulator = (() => {
+const VrCombat = (() => {
     // 1. MOB STAT GENERATION
     const createMob = (level, type) => {
         const baseStats = {
@@ -161,7 +161,7 @@ function registerCombatTool() {
     try {
         const context = getContext();
         if (!context || !context.registerFunctionTool) {
-            console.debug('VR Combat Simulator: Function tools are not supported');
+            console.debug('VrCombat: Function tools are not supported');
             return;
         }
 
@@ -202,12 +202,12 @@ function registerCombatTool() {
         });
 
         context.registerFunctionTool({
-            name: 'vrCombatSimulator',
+            name: 'vrCombat',
             displayName: 'VrCombat',
             description: 'VrCombat is a tool to simulate combat.',
             parameters: combatSchema,
             action: async (args) => {
-                const result = await VRCombatSimulator.runCombat(args.player, args.enemies);
+                const result = await VrCombat.runCombat(args.player, args.enemies);
                 return result;
             },
             formatMessage: () => '',
@@ -222,5 +222,6 @@ function registerCombatTool() {
 jQuery(function () {
     registerCombatTool();
 });
+
 
 
