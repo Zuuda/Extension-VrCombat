@@ -90,8 +90,10 @@ const VrCombat = (() => {
                 combatLog.push(`🏃 Flee attempt...`);
                 if (fled = attemptFlee(player.luk)) {
                     combatLog.push(`✅ Escaped successfully!`);
+                    fled = true;
                     break;
                 }
+                fled = false;
                 combatLog.push(`❌ Escape failed!`);
             } else {
                 // Select target
@@ -222,6 +224,7 @@ function registerCombatTool() {
 jQuery(function () {
     registerCombatTool();
 });
+
 
 
 
