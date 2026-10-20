@@ -182,6 +182,7 @@ const VrCombat = (() => {
 })();
 
 // ============== TOOL REGISTRATION ==============
+// ============== TOOL REGISTRATION ==============
 function registerCombatTool() {
     try {
         const context = getContext();
@@ -190,8 +191,7 @@ function registerCombatTool() {
             return;
         }
 
-        // FIXED: Removed $schema line which causes 400 Bad Request on Gemini/LiteRouter
-        const combatSchema = Object.freeze({
+        const combatSchema = {
             type: 'object',
             properties: {
                 player: {
@@ -203,9 +203,9 @@ function registerCombatTool() {
                         atk: { type: 'integer' },
                         def: { type: 'integer' },
                         luk: { type: 'integer' },
-                        potions: { type: 'integer', description: 'Potions currently slotted in quick-belt (max 4 on starter belt)' },
-                        potionHeal: { type: 'integer', description: 'HP restored per potion (default 15 for basic)' },
-                        regen: { type: 'integer', description: 'Optional HP regenerated per round (default 0)' }
+                        potions: { type: 'integer' },
+                        potionHeal: { type: 'integer' },
+                        regen: { type: 'integer' }
                     },
                     required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk', 'potions']
                 },
@@ -214,8 +214,8 @@ function registerCombatTool() {
                     items: {
                         type: 'object',
                         properties: {
-                            count: { type: 'integer', minimum: 1, maximum: 5 },
-                            level: { type: 'integer', minimum: 1, maximum: 50 },
+                            count: { type: 'integer' },
+                            level: { type: 'integer' },
                             type: {
                                 type: 'string',
                                 enum: ['Trash', 'Normal', 'Elite', 'Boss']
@@ -226,18 +226,18 @@ function registerCombatTool() {
                 }
             },
             required: ['player', 'enemies']
-        });
+        };
 
         context.registerFunctionTool({
             name: 'vrCombat',
             displayName: 'VrCombat',
-            description: 'VrCombat is a tool to simulate combat. Call this whenever combat occurs.',
+            description: 'Simulate combat between the player unit and enemy groups.',
             parameters: combatSchema,
             action: async (args) => {
                 const result = await VrCombat.runCombat(args.player, args.enemies);
                 return result;
             },
-            formatMessage: () => '',
+            formatMessage: (args) => `[Running VrCombat Simulation...]`,
             stealth: false
         });
         console.log('VR Combat Simulator tool registered successfully');
