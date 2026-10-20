@@ -22,7 +22,7 @@ const VrCombat = (() => {
             Boss: { hp: 3.0, atk: 2.0, def: 2.0, luk: 2.0 }
         };
 
-        const mod = typeModifiers[type];
+        const mod = typeModifiers[type] || typeModifiers.Normal;
         return {
             level,
             type,
@@ -36,31 +36,52 @@ const VrCombat = (() => {
 
     // 2. CORE MECHANICS
     const rollD6 = () => Math.floor(Math.random() * 6) + 1;
+    const rollD100 = () => Math.floor(Math.random() * 100) + 1;
 
     const calculateDamage = (attacker, defender) => {
         const diceRoll = rollD6();
         if (diceRoll === 1) return { damage: 0, isMiss: true, isCrit: false };
         if (diceRoll === 6) {
-            const baseDamage = Math.abs(attacker.atk - defender.def);
-            return { damage: baseDamage + 6 + attacker.luk, isMiss: false, isCrit: true };
+            // FIXED: Math.max(0, ...) prevents high DEF from increasing crit damage taken
+            const baseDamage = Math.max(0, attacker.atk - defender.def);
+            const lukBonus = Math.max(2, Math.floor(attacker.luk * 0.5));
+            return { damage: baseDamage + 6 + lukBonus, isMiss: false, isCrit: true };
         }
-        const totalDamage = Math.max(0, attacker.atk - defender.def + diceRoll);
+        const totalDamage = Math.max(1, attacker.atk - defender.def + Math.floor(diceRoll / 2));
         return { damage: totalDamage, isMiss: false, isCrit: false };
     };
 
-    const attemptFlee = luk => rollD6() >= (6 - luk);
+    // FIXED: Contested flee roll so LUK >= 6 isn't automatic 100% escape
+    const attemptFlee = (playerLuk, maxEnemyLuk) => {
+        const playerRoll = rollD6() + Math.floor(playerLuk / 4);
+        const enemyRoll = rollD6() + Math.floor(maxEnemyLuk / 4);
+        return playerRoll >= enemyRoll;
+    };
+
+    // AGNOSTIC RNG LOOT ROLLER (Prevents LLM "convenient plot loot")
+    const rollLootDrop = (level, type, playerLuk) => {
+        const roll = Math.min(100, rollD100() + Math.min(10, Math.floor(playerLuk / 3)));
+        const typeBonus = { Trash: -15, Normal: 0, Elite: 20, Boss: 40 }[type] || 0;
+        const finalRoll = roll + typeBonus;
+
+        if (finalRoll < 55) return `Material/Trash Only (Roll: ${finalRoll})`;
+
+        const slots = ['Weapon', 'Light Armor', 'Heavy Armor', 'Accessory/Ring', 'Amulet/Neck', 'Belt/Utility', 'Consumable'];
+        const stats = ['+HP', '+ATK', '+DEF', '+LUK', '+Speed/Stamina'];
+        const slot = slots[Math.floor(Math.random() * slots.length)];
+        const stat = stats[Math.floor(Math.random() * stats.length)];
+        const statValue = Math.max(1, Math.floor(level * 0.8) + (finalRoll >= 95 ? 3 : finalRoll >= 80 ? 1 : 0));
+
+        if (finalRoll >= 98) return `[RARE DROP] Lv.${level} ${slot} (${stat} +${statValue * 2}) (Roll: ${finalRoll})`;
+        if (finalRoll >= 82) return `[UNCOMMON DROP] Lv.${level} ${slot} (${stat} +${statValue}) (Roll: ${finalRoll})`;
+        return `[COMMON DROP] Lv.${level} ${slot} (${stat} +${Math.max(1, Math.floor(statValue * 0.7))}) (Roll: ${finalRoll})`;
+    };
 
     // 3. COMBAT ENGINE
-    /**
-     * Run VR combat simulation
-     * @param {Object} player Player stats
-     * @param {Array} enemies Array of enemy groups
-     * @returns {Promise<string>} Combat result log
-     */
     const runCombat = (player, enemies) => {
-        // Initialize combat state
         const combatLog = [];
         let playerHp = player.hp;
+        const potionHeal = player.potionHeal || 15;
         let round = 1;
         let fled = false;
         let victory = false;
@@ -68,61 +89,67 @@ const VrCombat = (() => {
         // Create mob instances
         const mobGroups = enemies.map((group, groupId) => ({
             id: groupId + 1,
+            type: group.type,
+            level: group.level,
             mobs: Array.from({ length: group.count }, () => ({
                 ...createMob(group.level, group.type),
                 groupId: groupId + 1
             }))
         }));
 
-        // Flatten all mobs for targeting
         const allMobs = mobGroups.flatMap(g => g.mobs);
 
-        // Main combat loop
-        while (playerHp > 0 && !fled && !victory) {
+        // Safety cap at 30 rounds to prevent infinite tank stalemates
+        while (playerHp > 0 && !fled && !victory && round <= 30) {
             combatLog.push(`--- ROUND ${round} ---`);
 
-            // Player turn
-            if (playerHp <= player.maxHp * 0.2 && player.potions > 0) {
+            const livingMobs = allMobs.filter(m => m.currentHp > 0);
+            if (livingMobs.length === 0) {
+                victory = true;
+                break;
+            }
+
+            // Player turn: Auto-potion at <= 25% HP (consumes turn)
+            if (playerHp <= Math.floor(player.maxHp * 0.25) && player.potions > 0) {
                 player.potions--;
-                playerHp = Math.min(player.maxHp, playerHp + 15);
-                combatLog.push(`💊 Potion used! +15 HP (${player.potions} left)`);
-            } else if (playerHp <= player.maxHp * 0.2) {
-                combatLog.push(`🏃 Flee attempt...`);
-                if (fled = attemptFlee(player.luk)) {
+                playerHp = Math.min(player.maxHp, playerHp + potionHeal);
+                combatLog.push(`💊 Potion used! +${potionHeal} HP (HP: ${playerHp}/${player.maxHp} | ${player.potions} belt potions left)`);
+            } else if (playerHp <= Math.floor(player.maxHp * 0.25)) {
+                const maxEnemyLuk = Math.max(...livingMobs.map(m => m.luk));
+                combatLog.push(`🏃 HP Critical (${playerHp}/${player.maxHp}) & Belt Empty! Attempting flee...`);
+                if (attemptFlee(player.luk, maxEnemyLuk)) {
                     combatLog.push(`✅ Escaped successfully!`);
                     fled = true;
                     break;
                 }
-                fled = false;
                 combatLog.push(`❌ Escape failed!`);
             } else {
-                // Select target
-                const target = allMobs.find(m => m.currentHp > 0) || null;
-                if (!target) break;
-
-                // Attack sequence
+                const target = livingMobs[0];
                 const { damage, isMiss, isCrit } = calculateDamage(player, target);
                 if (isMiss) {
-                    combatLog.push(`❌ Attack missed Group ${target.groupId}!`);
+                    combatLog.push(`❌ Attack missed Group ${target.groupId} (${target.type})!`);
                 } else {
                     target.currentHp = Math.max(0, target.currentHp - damage);
-                    combatLog.push(`🗡️ Hit Group ${target.groupId}: ${damage} dmg`);
-                    if (isCrit) combatLog.push(`✨ CRITICAL!`);
-                    if (target.currentHp <= 0) combatLog.push(`☠️ Group ${target.groupId} defeated`);
+                    combatLog.push(`🗡️ Hit Group ${target.groupId} (${target.type}): ${damage} dmg (Mob HP: ${target.currentHp}/${target.maxHp})${isCrit ? ' ✨CRIT!' : ''}`);
+                    if (target.currentHp <= 0) combatLog.push(`☠️ Mob in Group ${target.groupId} defeated!`);
                 }
             }
 
             // Enemy turn
             let enemyDamage = 0;
             allMobs.filter(m => m.currentHp > 0).forEach(mob => {
-                const { damage } = calculateDamage(mob, player);
-                enemyDamage += damage;
-                combatLog.push(`🪓 Group ${mob.groupId} attacks: ${damage} dmg`);
+                const { damage, isMiss, isCrit } = calculateDamage(mob, player);
+                if (isMiss) {
+                    combatLog.push(`🛡️ Dodged/Blocked Group ${mob.groupId} attack!`);
+                } else {
+                    enemyDamage += damage;
+                    combatLog.push(`🪓 Group ${mob.groupId} hits for ${damage} dmg${isCrit ? ' ⚠️CRIT!' : ''}`);
+                }
             });
-            playerHp = Math.max(0, playerHp - enemyDamage);
-            if (enemyDamage > 0) combatLog.push(`💥 Total damage taken: ${enemyDamage}`);
 
-            // End check
+            playerHp = Math.max(0, playerHp - enemyDamage);
+            if (enemyDamage > 0) combatLog.push(`💥 Total damage taken: ${enemyDamage} (Player HP: ${playerHp}/${player.maxHp})`);
+
             victory = allMobs.every(m => m.currentHp <= 0);
             round++;
         }
@@ -130,26 +157,24 @@ const VrCombat = (() => {
         // Result calculation
         let xpChange = 0;
         let goldChange = 0;
+        const lootDrops = [];
 
         if (victory) {
             mobGroups.forEach(group => {
-                const baseXP = 25 * group.mobs[0].level;
-                const multiplier = { Trash: 0.6, Normal: 1.0, Elite: 1.8, Boss: 5.0 }[group.mobs[0].type];
+                const baseXP = 25 * group.level;
+                const multiplier = { Trash: 0.6, Normal: 1.0, Elite: 1.8, Boss: 5.0 }[group.type] || 1.0;
                 xpChange += Math.floor(baseXP * multiplier * group.mobs.length);
-                goldChange += Math.floor((5 + Math.random() * 10) * group.mobs[0].level * group.mobs.length);
+                goldChange += Math.floor((3 + Math.random() * 6) * group.level * group.mobs.length);
+                lootDrops.push(rollLootDrop(group.level, group.type, player.luk));
             });
-            // MODIFIED: Added HP and potion info to victory message
-            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} silver | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
+            combatLog.push(`🎉 VICTORY! Earned ${xpChange} XP and ${goldChange} currency | Final HP: ${playerHp}/${player.maxHp} | Belt Potions Left: ${player.potions}`);
+            combatLog.push(`🎁 RNG LOOT SEED: ${lootDrops.join(' | ')}`);
         } else if (playerHp <= 0) {
-            // START MODIFICATION: Remove XP/gold penalty on defeat
-            // MODIFIED: Added HP and potion info to defeat message
-            combatLog.push(`💀 DEFEAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
-            // END MODIFICATION
+            combatLog.push(`💀 DEFEAT! | Final HP: 0/${player.maxHp} | Belt Potions Left: ${player.potions}`);
         } else if (fled) {
-            // START MODIFICATION: Remove XP/gold penalty on retreat
-            // MODIFIED: Added HP and potion info to retreat message
-            combatLog.push(`🏃 RETREAT! | HP: ${playerHp}/${player.maxHp} | Potions: ${player.potions}`);
-            // END MODIFICATION
+            combatLog.push(`🏃 RETREAT! | Final HP: ${playerHp}/${player.maxHp} | Belt Potions Left: ${player.potions}`);
+        } else {
+            combatLog.push(`⏱️ STALEMATE (30 Rounds Reached)! | Final HP: ${playerHp}/${player.maxHp} | Belt Potions Left: ${player.potions}`);
         }
 
         return Promise.resolve(combatLog.join('\n'));
@@ -180,8 +205,9 @@ function registerCombatTool() {
                         atk: { type: 'integer' },
                         def: { type: 'integer' },
                         luk: { type: 'integer' },
-                        potions: { type: 'integer' },
-                        },
+                        potions: { type: 'integer', description: 'Potions currently slotted in quick-belt (max 4 on starter belt)' },
+                        potionHeal: { type: 'integer', description: 'HP restored per potion (default 15 for basic)' }
+                    },
                     required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk', 'potions']
                 },
                 enemies: {
@@ -206,7 +232,7 @@ function registerCombatTool() {
         context.registerFunctionTool({
             name: 'vrCombat',
             displayName: 'VrCombat',
-            description: 'VrCombat is a tool to simulate combat.',
+            description: 'VrCombat is a tool to simulate combat. Call this whenever combat occurs.',
             parameters: combatSchema,
             action: async (args) => {
                 const result = await VrCombat.runCombat(args.player, args.enemies);
@@ -224,7 +250,3 @@ function registerCombatTool() {
 jQuery(function () {
     registerCombatTool();
 });
-
-
-
-
