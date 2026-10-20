@@ -2,7 +2,7 @@
 
 ## Installation
 1. Install from GitHub in SillyTavern's plugin manager:
-   `https://github.com/Zuuda/vr-combat-simulator`
+   `https://github.com/Zuuda/vr-combat-simulato](https://github.com/Zuuda/Extension-VrCombat`
 2. Enable plugin in Extension Manager
 3. Enable "Function Calling" in AI Response Configuration
 
