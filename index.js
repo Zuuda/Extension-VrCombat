@@ -42,7 +42,6 @@ const VrCombat = (() => {
         const diceRoll = rollD6();
         if (diceRoll === 1) return { damage: 0, isMiss: true, isCrit: false };
         if (diceRoll === 6) {
-            // FIXED: Math.max(0, ...) prevents high DEF from increasing crit damage taken
             const baseDamage = Math.max(0, attacker.atk - defender.def);
             const lukBonus = Math.max(2, Math.floor(attacker.luk * 0.5));
             return { damage: baseDamage + 6 + lukBonus, isMiss: false, isCrit: true };
@@ -51,14 +50,12 @@ const VrCombat = (() => {
         return { damage: totalDamage, isMiss: false, isCrit: false };
     };
 
-    // FIXED: Contested flee roll so LUK >= 6 isn't automatic 100% escape
     const attemptFlee = (playerLuk, maxEnemyLuk) => {
         const playerRoll = rollD6() + Math.floor(playerLuk / 4);
         const enemyRoll = rollD6() + Math.floor(maxEnemyLuk / 4);
         return playerRoll >= enemyRoll;
     };
 
-    // AGNOSTIC RNG LOOT ROLLER (Prevents LLM "convenient plot loot")
     const rollLootDrop = (level, type, playerLuk) => {
         const roll = Math.min(100, rollD100() + Math.min(10, Math.floor(playerLuk / 3)));
         const typeBonus = { Trash: -15, Normal: 0, Elite: 20, Boss: 40 }[type] || 0;
@@ -78,12 +75,6 @@ const VrCombat = (() => {
     };
 
     // 3. COMBAT ENGINE
-    /**
-     * Run VR combat simulation
-     * @param {Object} player Player stats
-     * @param {Array} enemies Array of enemy groups
-     * @returns {Promise<string>} Combat result log
-     */
     const runCombat = (player, enemies) => {
         const combatLog = [];
         let playerHp = player.hp;
@@ -93,7 +84,6 @@ const VrCombat = (() => {
         let fled = false;
         let victory = false;
 
-        // Create mob instances
         const mobGroups = enemies.map((group, groupId) => ({
             id: groupId + 1,
             type: group.type,
@@ -106,7 +96,6 @@ const VrCombat = (() => {
 
         const allMobs = mobGroups.flatMap(g => g.mobs);
 
-        // Safety cap at 30 rounds to prevent infinite tank stalemates
         while (playerHp > 0 && !fled && !victory && round <= 30) {
             combatLog.push(`--- ROUND ${round} ---`);
 
@@ -116,7 +105,6 @@ const VrCombat = (() => {
                 break;
             }
 
-            // Player turn: Auto-potion at <= 25% HP (consumes turn)
             if (playerHp <= Math.floor(player.maxHp * 0.25) && player.potions > 0) {
                 player.potions--;
                 playerHp = Math.min(player.maxHp, playerHp + potionHeal);
@@ -142,7 +130,6 @@ const VrCombat = (() => {
                 }
             }
 
-            // Enemy turn
             let enemyDamage = 0;
             allMobs.filter(m => m.currentHp > 0).forEach(mob => {
                 const { damage, isMiss, isCrit } = calculateDamage(mob, player);
@@ -157,7 +144,6 @@ const VrCombat = (() => {
             playerHp = Math.max(0, playerHp - enemyDamage);
             if (enemyDamage > 0) combatLog.push(`💥 Total damage taken: ${enemyDamage} (Player HP: ${playerHp}/${player.maxHp})`);
 
-            // Optional Regen Tick (defaults to 0 if character has no regen)
             if (regenTick > 0 && playerHp > 0 && playerHp < player.maxHp) {
                 playerHp = Math.min(player.maxHp, playerHp + regenTick);
                 combatLog.push(`💚 Regen: +${regenTick} HP (HP: ${playerHp}/${player.maxHp})`);
@@ -167,7 +153,6 @@ const VrCombat = (() => {
             round++;
         }
 
-        // Result calculation
         let xpChange = 0;
         let goldChange = 0;
         const lootDrops = [];
@@ -205,8 +190,8 @@ function registerCombatTool() {
             return;
         }
 
+        // FIXED: Removed $schema line which causes 400 Bad Request on Gemini/LiteRouter
         const combatSchema = Object.freeze({
-            $schema: 'http://json-schema.org/draft-04/schema#',
             type: 'object',
             properties: {
                 player: {
