@@ -78,10 +78,17 @@ const VrCombat = (() => {
     };
 
     // 3. COMBAT ENGINE
+    /**
+     * Run VR combat simulation
+     * @param {Object} player Player stats
+     * @param {Array} enemies Array of enemy groups
+     * @returns {Promise<string>} Combat result log
+     */
     const runCombat = (player, enemies) => {
         const combatLog = [];
         let playerHp = player.hp;
         const potionHeal = player.potionHeal || 15;
+        const regenTick = player.regen || 0;
         let round = 1;
         let fled = false;
         let victory = false;
@@ -150,6 +157,12 @@ const VrCombat = (() => {
             playerHp = Math.max(0, playerHp - enemyDamage);
             if (enemyDamage > 0) combatLog.push(`💥 Total damage taken: ${enemyDamage} (Player HP: ${playerHp}/${player.maxHp})`);
 
+            // Optional Regen Tick (defaults to 0 if character has no regen)
+            if (regenTick > 0 && playerHp > 0 && playerHp < player.maxHp) {
+                playerHp = Math.min(player.maxHp, playerHp + regenTick);
+                combatLog.push(`💚 Regen: +${regenTick} HP (HP: ${playerHp}/${player.maxHp})`);
+            }
+
             victory = allMobs.every(m => m.currentHp <= 0);
             round++;
         }
@@ -206,7 +219,8 @@ function registerCombatTool() {
                         def: { type: 'integer' },
                         luk: { type: 'integer' },
                         potions: { type: 'integer', description: 'Potions currently slotted in quick-belt (max 4 on starter belt)' },
-                        potionHeal: { type: 'integer', description: 'HP restored per potion (default 15 for basic)' }
+                        potionHeal: { type: 'integer', description: 'HP restored per potion (default 15 for basic)' },
+                        regen: { type: 'integer', description: 'Optional HP regenerated per round (default 0)' }
                     },
                     required: ['level', 'hp', 'maxHp', 'atk', 'def', 'luk', 'potions']
                 },
